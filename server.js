@@ -86,7 +86,10 @@ async function notify(entry) {
     return;
   }
 
-  const yes = entry.attending === 'Joyfully accepts';
+  const who  = entry.name || 'Someone';
+  const yes  = entry.attending === 'Joyfully accepts';
+  const no   = entry.attending === 'Regretfully declines';
+  const head = yes ? 'A guest has accepted' : no ? 'A guest has declined' : 'A guest has responded';
   const line = (label, value) => value
     ? `<tr>
          <td style="padding:7px 16px 7px 0;color:#8a8578;font:11px/1.5 Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;vertical-align:top;white-space:nowrap">${esc(label)}</td>
@@ -99,16 +102,12 @@ async function notify(entry) {
     <div style="max-width:520px;margin:0 auto;background:#fdfbf5;padding:34px 30px;border:1px solid #e6ddc8">
       <p style="margin:0 0 6px;font:10px/1 Helvetica,Arial,sans-serif;letter-spacing:.34em;text-transform:uppercase;color:#a8874e">The Wedding Seal</p>
       <h1 style="margin:0 0 22px;font:400 27px/1.25 Georgia,serif;color:#2b2a26">
-        ${yes ? 'A guest has accepted' : 'A guest has declined'}
+        ${head}
       </h1>
       <table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse">
         ${line('Name', entry.name)}
         ${line('Response', entry.attending)}
         ${line('Knows them as', entry.relation)}
-        ${line('Party', entry.guests)}
-        ${line('Dietary', entry.dietary)}
-        ${line('Song', entry.song)}
-        ${line('Message', entry.message)}
       </table>
       <p style="margin:26px 0 0;padding-top:16px;border-top:1px solid #e6ddc8;font:12px/1.6 Helvetica,Arial,sans-serif;color:#8a8578">
         Received ${esc(entry.at)}
@@ -122,7 +121,7 @@ async function notify(entry) {
     body: JSON.stringify({
       from: NOTIFY_FROM,
       to: [NOTIFY_TO],
-      subject: `RSVP — ${entry.name} ${yes ? 'accepts' : 'declines'}`,
+      subject: `RSVP — ${who} ${yes ? 'accepts' : no ? 'declines' : 'responded'}`,
       html,
     }),
   });
@@ -178,18 +177,15 @@ const server = http.createServer(async (req, res) => {
       name:      clean(body.name),
       attending: clean(body.attending),
       relation:  clean(body.relation),
-      guests:    clean(body.guests),
-      dietary:   clean(body.dietary),
-      song:      clean(body.song),
-      message:   clean(body.message),
       at:        new Date().toISOString(),
     };
-    if (!entry.name || !entry.attending) return json(res, 400, { ok: false, error: 'missing fields' });
+    // Nothing on the form is required, so nothing is required here either. An empty
+    // response is still a response, and rejecting it would only lose it.
 
     const count = append(entry);
     // The guest should never wait on, or see, a mail failure.
     notify(entry).catch(e => console.error('notify threw:', e.message));
-    console.log('RSVP', count, entry.name, '|', entry.attending, '|', entry.relation);
+    console.log('RSVP', count, entry.name || '(no name)', '|', entry.attending || '(no answer)', '|', entry.relation);
     return json(res, 200, { ok: true });
   }
 
@@ -200,16 +196,14 @@ const server = http.createServer(async (req, res) => {
     const all = readAll();
     const rows = all.map(e => `
       <tr>
-        <td>${esc(e.name)}</td><td>${esc(e.attending)}</td><td>${esc(e.relation)}</td>
-        <td>${esc(e.guests)}</td><td>${esc(e.dietary)}</td><td>${esc(e.song)}</td>
-        <td>${esc(e.message)}</td><td>${esc(e.at)}</td>
+        <td>${esc(e.name)}</td><td>${esc(e.attending)}</td><td>${esc(e.relation)}</td><td>${esc(e.at)}</td>
       </tr>`).join('');
     return send(res, 200, `<!doctype html><meta charset="utf-8"><title>RSVPs</title>
       <style>body{font:14px/1.5 system-ui,sans-serif;padding:28px;background:#faf8f2}
       table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd6c4;padding:8px;text-align:left;vertical-align:top}
       th{background:#f1ead8;font-size:11px;letter-spacing:.1em;text-transform:uppercase}</style>
       <h1>RSVPs (${all.length})</h1>
-      <table><tr><th>Name<th>Response<th>Relation<th>Party<th>Dietary<th>Song<th>Message<th>At</tr>${rows}</table>`,
+      <table><tr><th>Name<th>Response<th>Relation<th>At</tr>${rows}</table>`,
       { 'Content-Type': TYPES['.html'] });
   }
 

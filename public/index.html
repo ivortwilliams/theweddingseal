@@ -208,7 +208,6 @@
     display:block;font-family:var(--sans);font-size:10px;letter-spacing:.26em;
     text-transform:uppercase;color:var(--ink-soft);margin-bottom:9px;
   }
-  .req{color:var(--gold)}
   input[type=text],input[type=email],select,textarea{
     width:100%;padding:12px 2px;
     font-family:var(--serif);font-size:18px;color:var(--ink);
@@ -230,7 +229,8 @@
   .choice{flex:1 1 190px;position:relative}
   .choice input{position:absolute;opacity:0;width:0;height:0}
   .choice span{
-    display:block;text-align:center;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    height:100%;text-align:center;cursor:pointer;
     padding:17px 14px;
     border:1px solid rgba(168,135,78,.42);
     font-family:var(--serif);font-size:17px;font-style:italic;color:var(--ink-soft);
@@ -336,8 +336,8 @@
       </p>
 
       <p class="where">
-        The Orangery at Hensley Park<br>
-        Hensley, Oxfordshire
+        4 Palmerston Street<br>
+        Annerley, Brisbane, Queensland 4103
       </p>
 
       <p class="footnote">Dinner and dancing to follow</p>
@@ -347,20 +347,20 @@
   <article class="sheet" id="rsvp-sheet">
     <div class="rsvp-head">
       <h2>Kindly Respond</h2>
-      <p>by the first of March, two thousand and twenty-seven</p>
+      <p>by the first of March &middot; nothing here is compulsory</p>
     </div>
 
     <form id="rsvp-form" novalidate>
       <div class="field">
-        <label for="name">Full name <span class="req">&middot;</span></label>
-        <input type="text" id="name" name="name" autocomplete="name" placeholder="As it appears on your invitation" required>
+        <label for="name">Your name</label>
+        <input type="text" id="name" name="name" autocomplete="name" placeholder="If you would like them to know">
       </div>
 
       <div class="field">
-        <span class="legend">Will you be attending? <span class="req">&middot;</span></span>
+        <span class="legend">Will you be there?</span>
         <div class="choice-row">
           <label class="choice">
-            <input type="radio" name="attending" value="Joyfully accepts" required>
+            <input type="radio" name="attending" value="Joyfully accepts">
             <span>Joyfully accepts</span>
           </label>
           <label class="choice">
@@ -371,40 +371,10 @@
       </div>
 
       <div class="field">
-        <label for="relation">How do you know the couple? <span class="req">&middot;</span></label>
-        <select id="relation" name="relation" required>
-          <option value="" selected disabled>Please select&hellip;</option>
-          <option>Friend of the groom</option>
-          <option>Friend of the bride</option>
-          <option>Family of the groom</option>
-          <option>I am the son of one of the couple</option>
-          <option>Colleague of the groom</option>
-          <option>I introduced them</option>
-          <option>We have not met, but I was told to come</option>
-          <option>I would rather not discuss it</option>
+        <label for="relation">How do you know the couple?</label>
+        <select id="relation" name="relation">
+          <option selected>I am the son of the bride.</option>
         </select>
-      </div>
-
-      <div class="field">
-        <label for="guests">Number in your party</label>
-        <select id="guests" name="guests">
-          <option>1</option><option>2</option><option>3</option><option>4</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="dietary">Dietary requirements</label>
-        <input type="text" id="dietary" name="dietary" placeholder="Allergies, intolerances, sudden loss of appetite">
-      </div>
-
-      <div class="field">
-        <label for="song">One song to guarantee you on the dance floor</label>
-        <input type="text" id="song" name="song" placeholder="Artist &mdash; Title">
-      </div>
-
-      <div class="field">
-        <label for="message">A message for the happy couple</label>
-        <textarea id="message" name="message" placeholder="They will read every word."></textarea>
       </div>
 
       <button class="btn" type="submit" id="submit">Send my response</button>
@@ -476,10 +446,6 @@
     var data = {};
     new FormData(form).forEach(function(v,k){ data[k] = String(v).slice(0,2000); });
 
-    if(!data.name || !data.name.trim())  return fail('Please give us your name.');
-    if(!data.attending)                  return fail('Please let us know whether you can attend.');
-    if(!data.relation)                   return fail('Please tell us how you know the couple.');
-
     btn.disabled = true;
     btn.textContent = 'Sending…';
 
@@ -492,7 +458,7 @@
         if(res && res.ok === false) throw new Error(res.error || 'rejected');
         if(data.attending === 'Regretfully declines'){
           copy.textContent = 'Your response has been recorded. The couple are sorry you cannot join them, and rather more sorry than they are letting on.';
-        } else if(data.relation === 'I am the son of one of the couple'){
+        } else if(data.relation === 'I am the son of the bride.'){
           copy.textContent = 'Your response has been recorded. The couple are delighted, and have asked whether you would say a few words.';
         }
         sheet.hidden = true;
